@@ -17,22 +17,25 @@ class TaskController extends Controller
      */
     public function index()
     {
-        // Obtenemos al usuario logueado actualmente
         $user = auth()->user();
-
-        // Iniciamos una consulta con las relaciones para que no haga muchas peticiones a la DB
         $query = Task::with(['client', 'area', 'status', 'priority', 'user']);
 
         if ($user->role === 'admin') {
-            // Si es admin, traemos todas las tareas de la base de datos
-            $tasks = $query->latest()->get();
+            $tasks = $query->orderBy('priority_id', 'desc')->orderBy('created_at', 'asc')->get();
         } else {
-            // Si es usuario, filtramos solo las tareas donde él sea el responsable
-            $tasks = $query->where('user_id', $user->id)->latest()->get();
+            $tasks = $query->where('user_id', $user->id)->orderBy('priority_id', 'desc')->orderBy('created_at', 'asc')->get();
         }
 
-        // Retornamos la vista enviando la colección de tareas
-        return view('tasks.index', compact('tasks'));
+        // Separación con nombre exacto: 'Completado'
+        $closedTasks = $tasks->filter(function($task) {
+            return trim($task->status->name) === 'Completado';
+        });
+
+        $openTasks = $tasks->reject(function($task) {
+            return trim($task->status->name) === 'Completado';
+        });
+
+        return view('tasks.index', compact('openTasks', 'closedTasks'));
     }
 
     /**

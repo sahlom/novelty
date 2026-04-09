@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
-    'logo_img_xl' => null,
-    'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
+    'logo' => '<b>Sahlom</b>',
+    'logo_img' => 'img/logoSahlomWhite280.png',
+    'logo_img_class' => 'brand-image img-circle elevation-3 ml-1',
+    'logo_img_xl' => 'img/logoSahlom510x115.png',
+    'logo_img_xl_class' => 'brand-image-xs ml-4',
+    'logo_img_alt' => 'Logo Sahlom',
 
     /*
     |--------------------------------------------------------------------------
@@ -215,7 +215,7 @@ return [
     */
 
     'sidebar_mini' => 'lg',
-    'sidebar_collapse' => false,
+    'sidebar_collapse' => true,
     'sidebar_collapse_auto_size' => false,
     'sidebar_collapse_remember' => false,
     'sidebar_collapse_remember_no_transition' => true,
@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'dashboard',
+    'dashboard_url' => 'monitor',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -301,11 +301,6 @@ return [
     'menu' => [
         // Navbar items:
         [
-            'type' => 'navbar-search',
-            'text' => 'search',
-            'topnav_right' => true,
-        ],
-        [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
@@ -317,16 +312,16 @@ return [
             'can' => 'manage-blog',
         ],
         [
-            'text' => 'Dashboard',
-            'url' => 'dashboard',
+            'text' => 'Monitor General',
+            'url' => 'monitor',
             'icon' => 'fas fa-fw fa-tv',
             // 'label' => 4,
             // 'label_color' => 'success',
         ],
         [
-            'text' => 'Monitor General',
-            'url' => 'monitor',
-            'icon' => 'fas fa-fw fa-tv',
+            'text' => 'Dashboard',
+            'url' => 'dashboard',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
             // 'label' => 4,
             // 'label_color' => 'success',
         ],
@@ -352,13 +347,19 @@ return [
                 ],
                 [
                     'text' => 'Prioridades',
-                    'url' => '#',
+                    'url' => 'priorities',
                     'icon' => 'fas fa-fw fa-layer-group',
                 ],
                 [
                     'text' => 'Estatus',
-                    'url' => '#',
+                    'url' => 'statuses',
                     'icon' => 'fas fa-fw fa-tasks',
+                ],
+                [
+                    'text' => 'Usuarios',
+                    'url'  => 'users',
+                    'icon' => 'fas fa-fw fa-users',
+                    'can' => 'admin-only', // Requiere que definas el Gate o valides rol
                 ],
             ],
         ],

@@ -66,7 +66,7 @@
                     <td>{{ $task->area->name }}</td>
                     <td>
                         <i class="fas fa-user-circle text-muted"></i> 
-                        {{ $task->user->name ?? 'Por asignar' }}
+                        {{ $task->user->display_name ?? ($task->user->name ?? 'Sin asignar') }}
                     </td>
                     <td class="text-center">
                         <span class="badge p-2 w-75 {{ $task->status->name == 'En Proceso' ? 'badge-primary' : 'badge-light border' }}">

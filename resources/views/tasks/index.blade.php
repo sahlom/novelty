@@ -7,85 +7,46 @@
 @stop
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Tareas Registradas</h3>
-        <div class="card-tools">
-            <a href="{{ route('tasks.create') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Nueva Tarea
-            </a>
-        </div>
+<div class="card card-primary card-outline card-tabs">
+    <div class="card-header p-0 pt-1 border-bottom-0">
+        <ul class="nav nav-tabs" id="custom-tabs-three-tab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tasks-open-tab" data-toggle="pill" href="#tasks-open" role="tab" aria-controls="tasks-open" aria-selected="true">
+                    Tareas Abiertas <span class="badge badge-warning ml-1">{{ $openTasks->count() }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tasks-closed-tab" data-toggle="pill" href="#tasks-closed" role="tab" aria-controls="tasks-closed" aria-selected="false">
+                    Tareas Cerradas <span class="badge badge-success ml-1">{{ $closedTasks->count() }}</span>
+                </a>
+            </li>
+            <div class="ml-auto p-2">
+                <a href="{{ route('tasks.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nueva Tarea
+                </a>
+            </div>
+        </ul>
     </div>
     <div class="card-body">
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Título</th>
-                    <th>Cliente</th>
-                    <th>Área</th>
-                    <th>Responsable</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($tasks as $task)
-                <tr>
-                    <td>{{ $task->id }}</td>
-                    <td>{{ $task->title }}</td>
-                    <td>{{ $task->client->razon_social }}</td>
-                    <td>{{ $task->area->name }}</td>
-                    <td>{{ $task->user->name ?? 'Sin asignar' }}</td>
-                    <td>
-                        <span class="badge badge-info">{{ $task->status->name }}</span>
-                    </td>
-                    <td>
-                        @php
-                            $badgeColor = [
-                                'Baja' => 'badge-secondary',
-                                'Media' => 'badge-info',
-                                'Alta' => 'badge-warning',
-                                'Urgente' => 'badge-danger'
-                            ][$task->priority->name] ?? 'badge-dark';
-                        @endphp
-                        <span class="badge {{ $badgeColor }}">{{ $task->priority->name }}</span>
-                    </td>
-                    <td>
-                        <div class="btn-group">
-                            {{-- Botón Ver (Todos pueden) --}}
-                            <a href="{{ route('tasks.show', $task->id) }}" 
-                            class="btn btn-xs btn-default text-primary mx-1 shadow" 
-                            title="Ver detalles">
-                                <i class="fa fa-lg fa-fw fa-eye"></i>
-                            </a>
+        <div class="tab-content" id="custom-tabs-three-tabContent">
+            {{-- Pestaña Abiertas --}}
+            <div class="tab-pane fade show active" id="tasks-open" role="tabpanel" aria-labelledby="tasks-open-tab">
+                @if($openTasks->isEmpty())
+                    <p class="text-center py-4">No tienes tareas abiertas. ¡Buen trabajo!</p>
+                @else
+                    @include('tasks.partials.table', ['tasks' => $openTasks])
+                @endif
+            </div>
 
-                            {{-- Botón Editar (Admin o Responsable de la tarea) --}}
-                            @if(auth()->user()->role === 'admin' || auth()->id() === $task->user_id)
-                                <a href="{{ route('tasks.edit', $task->id) }}" 
-                                class="btn btn-xs btn-default text-info mx-1 shadow" 
-                                title="Editar">
-                                    <i class="fa fa-lg fa-fw fa-pen"></i>
-                                </a>
-                            @endif
-
-                            {{-- Botón Eliminar (Solo Admin) --}}
-                            @if(auth()->user()->role === 'admin')
-                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta tarea?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-xs btn-default text-danger mx-1 shadow" title="Eliminar">
-                                        <i class="fa fa-lg fa-fw fa-trash"></i>
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+            {{-- Pestaña Cerradas --}}
+            <div class="tab-pane fade" id="tasks-closed" role="tabpanel" aria-labelledby="tasks-closed-tab">
+                @if($closedTasks->isEmpty())
+                    <p class="text-center py-4">No hay tareas completadas todavía.</p>
+                @else
+                    @include('tasks.partials.table', ['tasks' => $closedTasks])
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @stop
