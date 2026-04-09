@@ -312,10 +312,6 @@ return [
 
         // Sidebar items:
         [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-        [
             'text' => 'blog',
             'url' => 'admin/blog',
             'can' => 'manage-blog',
@@ -340,44 +336,32 @@ return [
             'url' => 'tasks',
             'icon' => 'fas fa-fw fa-clipboard-list',
         ],
-        // [
-        //     'text' => 'multilevel',
-        //     'icon' => 'fas fa-fw fa-share',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //             'submenu' => [
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                 ],
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                     'submenu' => [
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                     ],
-        //                 ],
-        //             ],
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //     ],
-        // ],
+        [
+            'text' => 'Catálogo',
+            'icon' => 'fas fa-fw fa-atlas',
+            'submenu' => [
+                [
+                    'text' => 'Clientes',
+                    'url' => 'clients',
+                    'icon' => 'fas fa-fw fa-building',
+                ],
+                [
+                    'text' => 'Áreas',
+                    'url' => 'areas',
+                    'icon' => 'fas fa-fw fa-sitemap',
+                ],
+                [
+                    'text' => 'Prioridades',
+                    'url' => '#',
+                    'icon' => 'fas fa-fw fa-layer-group',
+                ],
+                [
+                    'text' => 'Estatus',
+                    'url' => '#',
+                    'icon' => 'fas fa-fw fa-tasks',
+                ],
+            ],
+        ],
     ],
 
     /*

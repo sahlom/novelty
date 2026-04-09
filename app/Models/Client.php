@@ -15,6 +15,11 @@ class Client extends Model
     'csd', 'csd_vigencia'
     ];
 
+    protected $casts = [
+    'fiel_vigencia' => 'date',
+    'csd_vigencia' => 'date',
+    ];
+
     // Relaciones Uno a Muchos
     public function tasks()
     {

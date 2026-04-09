@@ -79,7 +79,7 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         // Cargamos las relaciones para ver quién es el cliente, área, etc.
-        $task->load(['client', 'area', 'status', 'priority', 'user']);
+        $task->load(['comments.user', 'client', 'user', 'area', 'status', 'priority']);
         return view('tasks.show', compact('task'));
     }
 

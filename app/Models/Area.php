@@ -9,6 +9,8 @@ class Area extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['name'];
+    
     // Relaciones Uno a Muchos
     public function tasks()
     {

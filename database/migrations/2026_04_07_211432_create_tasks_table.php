@@ -15,11 +15,24 @@ return new class extends Migration
             $table->id();
 
             // Llaves Foráneas (Relaciones)
-            $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
+            
+            // Si borras el cliente, la DB te detiene (Restrict) para proteger el historial
+            $table->foreignId('client_id')->constrained('clients');            
+            // $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
+
+
+            // Si el usuario o el área desaparecen, la tarea se queda (Set Null)
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('area_id')->constrained('areas')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
-            $table->foreignId('priority_id')->constrained('priorities')->onDelete('cascade');
+            $table->foreignId('area_id')->nullable()->constrained('areas')->onDelete('set null');
+            // $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            // $table->foreignId('area_id')->nullable()->constrained()->onDelete('set null');
+
+
+            // Estatus y Prioridad son vitales. No permitas borrar el catálogo si hay tareas usándolo
+            $table->foreignId('status_id')->constrained('statuses'); 
+            $table->foreignId('priority_id')->constrained('priorities');
+            // $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            // $table->foreignId('priority_id')->constrained('priorities')->onDelete('cascade');
 
             // Atributos de la Tarea
             $table->string('title');
