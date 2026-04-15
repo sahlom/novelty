@@ -20,16 +20,16 @@ class TaskCommentSeeder extends Seeder
         $userIds = User::pluck('id')->toArray(); // Admin o usuario pueden comentar
 
         $comentariosEjemplo = [
-            'Se contactó al proveedor y reportan falla masiva.',
-            'El equipo se llevó a taller para revisión profunda.',
-            'Usuario confirma que ya tiene acceso a internet.',
-            'Esperando piezas de repuesto para el servidor.',
-            'Se realizó limpieza, se recomienda cambio de pasta térmica.',
-            'Configuración completada, falta validar con el cliente.',
-            'Se intentó llamar pero el cliente no responde.',
-            'Respaldo verificado y guardado en disco externo.',
-            'La falla persiste después de reiniciar el equipo.',
-            'Tarea asignada al técnico de guardia.'
+            'Nóminas timbradas y enviadas, todo correcto.',
+            'Asientos contables registrados, sin observaciones.',
+            'Recibos de nómina generados y entregados.',
+            'Trámites IMSS actualizados y confirmados.',
+            'Retenciones de ISR calculadas y declaradas.',
+            'Estado de resultados listo para revisión.',
+            'Conciliación bancaria concluida, saldos coinciden.',
+            'Finiquitos procesados y pagados conforme.',
+            'Declaraciones mensuales enviadas al SAT.',
+            'Catálogo de cuentas actualizado y validado.'
         ];
 
         foreach ($comentariosEjemplo as $comentario) {

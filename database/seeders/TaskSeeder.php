@@ -28,16 +28,16 @@ class TaskSeeder extends Seeder
         $priorityIds = Priority::pluck('id')->toArray();
 
         $tareasEjemplo = [
-            'Falla en enlace de fibra óptica',
-            'Configuración de VPN Site-to-Site',
-            'Mantenimiento preventivo Servidor Dell',
-            'Actualización de antivirus en contabilidad',
-            'Revisión de cámaras de seguridad (DVR)',
-            'Instalación de nodo de red en dirección',
-            'Configuración de cuenta de correo Outlook',
-            'Respaldo de base de datos SQL Server',
-            'Limpieza física de racks',
-            'Revisión de firewall Pfsense'
+            'Cálculo y timbrado de nóminas mensuales',
+            'Registro de asientos contables diarios',
+            'Emisión de recibos de nómina oficiales',
+            'Gestión de obligaciones con el IMSS',
+            'Cálculo de retenciones de ISR trimestrales',
+            'Elaboración del estado de resultados',
+            'Conciliación bancaria mensual',
+            'Cálculo y pago de finiquitos laborales',
+            'Presentación de declaraciones fiscales mensuales',
+            'Actualización del catálogo de cuentas'
         ];
 
         foreach ($tareasEjemplo as $titulo) {
