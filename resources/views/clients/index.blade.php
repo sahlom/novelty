@@ -2,6 +2,9 @@
 
 @section('title', 'Listado de Clientes')
 
+{{-- Dejamos solo el plugin base que sí funciona impecable en tu entorno --}}
+@section('plugins.Datatables', true)
+
 @section('content_header')
     <h1>Gestión de Clientes</h1>
 @stop
@@ -9,11 +12,14 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Expedientes de Clientes</h3>
-        <div class="card-tools">
-            <a href="{{ route('clients.create') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Nuevo Cliente
-            </a>
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <div>
+                <a href="{{ route('clients.create') }}" class="btn btn-primary btn-sm align-middle">
+                    <i class="fas fa-plus"></i> Nuevo Cliente
+                </a>
+            </div>
+            
+            <div id="table-actions-container"></div>
         </div>
     </div>
     <div class="card-body">
@@ -26,29 +32,19 @@
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        @endif
-
-        <table class="table table-bordered table-striped">
-            <thead>
+        <table id="clients-table" class="table table-bordered table-striped clickable-table">
+            <thead class="bg-primary text-white">
                 <tr>
                     <th>Razón Social / RFC</th>
                     <th>Contacto</th>
                     <th>Email / Tel</th>
                     <th>Vigencias (FIEL/CSD)</th>
                     <th>Docs</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($clients as $client)
-                <tr>
+                <tr data-href="{{ route('clients.show', $client->id) }}">
                     <td>
                         <strong>{{ $client->razon_social }}</strong><br>
                         <small class="text-muted">{{ $client->rfc }}</small>
@@ -62,7 +58,6 @@
                     </td>
                     <td>
                         @php
-                            // Lógica del semáforo preventivo para la FIEL
                             $fielAlert = 'text-success';
                             if ($client->fiel_vigencia) {
                                 if ($client->fiel_vigencia->isPast()) {
@@ -77,7 +72,6 @@
                                 }
                             }
 
-                            // Lógica del semáforo preventivo para el CSD
                             $csdAlert = 'text-success';
                             if ($client->csd_vigencia) {
                                 if ($client->csd_vigencia->isPast()) {
@@ -98,29 +92,10 @@
                         </small>
                     </td>
                     <td class="text-center" style="font-size: 1.1rem;">
-                        {{-- Indicadores visuales basados en los campos de tu nuevo modelo --}}
-                        <i class="fas fa-file-pdf {{ $client->csf ? 'text-success' : 'text-gray' }} mx-1" title="CSF (Constancia de Situación Fiscal)"></i>
+                        <i class="fas fa-file-pdf {{ $client->csf ? 'text-success' : 'text-gray' }} mx-1" title="CSF"></i>
                         <i class="fas fa-file-invoice {{ $client->opinion_cumplimiento ? 'text-success' : 'text-gray' }} mx-1" title="Opinión de Cumplimiento"></i>
                         <i class="fas fa-certificate {{ $client->fiel ? 'text-warning' : 'text-gray' }} mx-1" title="Archivos FIEL"></i>
                         <i class="fas fa-key {{ $client->csd ? 'text-info' : 'text-gray' }} mx-1" title="Archivos CSD"></i>
-                    </td>
-                    <td>
-                        <div class="btn-group">
-                            <a href="{{ route('clients.show', $client->id) }}" class="btn btn-xs btn-default text-primary mx-1 shadow" title="Ver Expediente">
-                                <i class="fa fa-lg fa-fw fa-eye"></i>
-                            </a>
-                            <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-xs btn-default text-info mx-1 shadow" title="Editar">
-                                <i class="fa fa-lg fa-fw fa-pen"></i>
-                            </a>
-                            @if(auth()->user()->role === 'admin')
-                            <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-xs btn-default text-danger mx-1 shadow" title="Eliminar">
-                                    <i class="fa fa-lg fa-fw fa-trash"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </div>
                     </td>
                 </tr>
                 @endforeach
@@ -129,3 +104,84 @@
     </div>
 </div>
 @stop
+
+@section('css')
+<style>
+    .clickable-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    .clickable-table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.15) !important; 
+    }
+</style>
+@stop
+
+@push('js')
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var table = $('#clients-table').DataTable({
+            "responsive": true, 
+            "autoWidth": false,
+            "lengthChange": true,
+            "lengthMenu": [[-1, 10, 50, 100], ["Todos", 10, 50, 100]],
+            "pageLength": -1, 
+            "dom": 'lfrtip', // Forzamos estructura limpia para permitir la inyección manual
+
+            "buttons": [
+                { extend: 'copy', text: '<i class="fas fa-copy"></i> Copiar', className: 'btn btn-sm btn-default' },
+                { extend: 'excel', text: '<i class="fas fa-file-excel text-success"></i> Excel', className: 'btn btn-sm btn-default' },
+                { extend: 'pdf', text: '<i class="fas fa-file-pdf text-danger"></i> PDF', className: 'btn btn-sm btn-default' },
+                { extend: 'print', text: '<i class="fas fa-print text-info"></i> Imprimir', className: 'btn btn-sm btn-default' },
+                { extend: 'colvis', text: '<i class="fas fa-columns text-secondary"></i> Columnas', className: 'btn btn-sm btn-default' }
+            ],
+
+            "language": {
+                "emptyTable": "No hay información disponible en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ clientes",
+                "infoEmpty": "Mostrando 0 a 0 de 0 clientes",
+                "infoFiltered": "(Filtrado de _MAX_ clientes totales)",
+                "lengthMenu": "Mostrar _MENU_ registros",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron resultados coincidentes",
+                "paginate": {
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                },
+                "buttons": {
+                    "copyTitle": "Copiado al portapapeles",
+                    "copySuccess": {
+                        "_": "%d filas copiadas",
+                        "1": "1 fila copiada"
+                    },
+                    "colvis": "Columnas visibles"
+                }
+            }
+        });
+
+        // Movemos el contenedor de botones al espacio reservado en el header
+        table.buttons().container().appendTo('#table-actions-container');
+
+        // Evento de redirección por fila protegiendo clics accidentales en iconos
+        $('#clients-table tbody').on('click', 'tr', function (e) {
+            if ($(e.target).is('button') || $(e.target).is('i') || $(e.target).is('a')) {
+                return;
+            }
+            var url = $(this).data('href');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+</script>
+@endpush

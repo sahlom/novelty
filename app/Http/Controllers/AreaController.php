@@ -43,7 +43,10 @@ class AreaController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $area = Area::with('tasks')->findOrFail($id);
+
+        // Retornamos la vista que acabamos de crear pasándole la variable
+        return view('areas.show', compact('area'));
     }
 
     /**
