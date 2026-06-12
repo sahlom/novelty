@@ -38,7 +38,7 @@
                     <div class="form-group">
                         <label for="role">Rol de Usuario</label>
                         <select name="role" class="form-control">
-                            <option value="usuario" {{ old('role') == 'usuario' ? 'selected' : '' }}>Usuario</option>
+                            <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>Usuario</option>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrador</option>
                         </select>
                     </div>

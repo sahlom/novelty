@@ -37,9 +37,10 @@
                     <div class="form-group">
                         <label for="role">Rol de Usuario</label>
                         <select name="role" class="form-control">
-                            <option value="usuario" {{ $user->role == 'usuario' ? 'selected' : '' }}>Usuario (Técnico)</option>
+                            <option value="user" {{ $user->role == 'user' ? 'selected' : '' }}>Usuario (Técnico)</option>
                             <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Administrador</option>
                         </select>
+
                     </div>
                 </div>
             </div>
