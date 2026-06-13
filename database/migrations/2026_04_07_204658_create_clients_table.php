@@ -18,14 +18,17 @@ return new class extends Migration
             $table->string('rfc', 13)->unique();
             $table->string('tel')->nullable();
             $table->string('email')->nullable();
-            
-            // Campos para documentos y firmas
-            $table->text('csf')->nullable(); // Guardaremos la ruta del archivo
-            $table->text('opinion_cumplimiento')->nullable();
-            $table->text('fiel')->nullable();
+
+            // Campos de Semáforos SAT (Vigencias)
             $table->date('fiel_vigencia')->nullable();
-            $table->text('csd')->nullable();
             $table->date('csd_vigencia')->nullable();
+            
+            // Rutas de archivos privados
+            $table->text('csf')->nullable(); // Guardaremos la ruta del archivo
+            $table->text('opinion')->nullable();
+            $table->text('fiel')->nullable();
+            $table->text('csd')->nullable();
+
             $table->timestamps();
         });
     }

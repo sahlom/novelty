@@ -19,13 +19,20 @@
             </a>
 
             @if(auth()->user()->role === 'admin')
-                <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar este cliente? Se borrará todo su historial permanentemente.')">
-                    @csrf 
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-primary btn-sm shadow-sm">
-                        <i class="fas fa-trash-alt"></i> Eliminar Cliente
+                @if($client->tasks()->exists())
+                    <button class="btn btn-primary btn-sm shadow-sm mr-2" style="opacity: 0.6; cursor: not-allowed;" 
+                            title="No se puede eliminar: Este cliente cuenta con tareas registradas en el sistema." disabled>
+                        <i class="fas fa-ban"></i> No se puede Eliminar
                     </button>
-                </form>
+                @else
+                    <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar este cliente? Esta acción borrará el registro del catálogo de forma irreversible.')">
+                        @csrf 
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-primary btn-sm shadow-sm mr-2">
+                            <i class="fas fa-trash-alt"></i> Eliminar Cliente
+                        </button>
+                    </form>
+                @endif
             @endif
         </div>
     </div>
@@ -33,6 +40,7 @@
 
 @section('content')
 <div class="row mb-4">
+    {{-- Columna Izquierda: Perfil del Cliente --}}
     <div class="col-md-4">
         <div class="card card-primary card-outline h-100">
             <div class="card-body box-profile d-flex flex-column justify-content-center">
@@ -63,6 +71,7 @@
         </div>
     </div>
 
+    {{-- Columna Derecha: Documentación SAT y Semáforos --}}
     <div class="col-md-8">
         <div class="card card-secondary card-outline h-100">
             <div class="card-header">
@@ -72,26 +81,51 @@
             </div>
             <div class="card-body">
                 @php
-                    // Lógica de semáforos preventivos para vigencias
-                    $fielClass = 'badge-success'; $fielTxt = 'Vigente';
-                    if($client->fiel_vigencia) {
+                    // Lógica de semáforos preventivos para vigencias (FIEL)
+                    if (!$client->fiel_vigencia) {
+                        $fielClass = 'badge-secondary'; 
+                        $fielTxt = 'Sin registrar';
+                    } else {
                         $fielDate = \Carbon\Carbon::parse($client->fiel_vigencia);
-                        if($fielDate->isPast()) { $fielClass = 'badge-danger'; $fielTxt = 'Vencida'; }
-                        else {
+                        if ($fielDate->isPast()) { 
+                            $fielClass = 'badge-danger'; 
+                            $fielTxt = 'Vencida'; 
+                        } else {
                             $daysToFiel = now()->diffInDays($fielDate, false);
-                            if ($daysToFiel <= 5) { $fielClass = 'badge-danger'; $fielTxt = 'Crítico (< 5 días)'; }
-                            elseif ($daysToFiel <= 30) { $fielClass = 'badge-warning'; $fielTxt = 'Próxima a vencer'; }
+                            if ($daysToFiel <= 5) { 
+                                $fielClass = 'badge-danger'; 
+                                $fielTxt = 'Crítico (< 5 días)'; 
+                            } elseif ($daysToFiel <= 30) { 
+                                $fielClass = 'badge-warning'; 
+                                $fielTxt = 'Próxima a vencer'; 
+                            } else { 
+                                $fielClass = 'badge-success'; 
+                                $fielTxt = 'Vigente'; 
+                            }
                         }
                     }
                     
-                    $csdClass = 'badge-success'; $csdTxt = 'Vigente';
-                    if($client->csd_vigencia) {
+                    // Lógica de semáforos preventivos para vigencias (CSD)
+                    if (!$client->csd_vigencia) {
+                        $csdClass = 'badge-secondary'; 
+                        $csdTxt = 'Sin registrar';
+                    } else {
                         $csdDate = \Carbon\Carbon::parse($client->csd_vigencia);
-                        if($csdDate->isPast()) { $csdClass = 'badge-danger'; $csdTxt = 'Vencido'; }
-                        else {
+                        if ($csdDate->isPast()) { 
+                            $csdClass = 'badge-danger'; 
+                            $csdTxt = 'Vencido'; 
+                        } else {
                             $daysToCsd = now()->diffInDays($csdDate, false);
-                            if ($daysToCsd <= 5) { $csdClass = 'badge-danger'; $csdTxt = 'Crítico (< 5 días)'; }
-                            elseif ($daysToCsd <= 30) { $csdClass = 'badge-warning'; $csdTxt = 'Próximo a vencer'; }
+                            if ($daysToCsd <= 5) { 
+                                $csdClass = 'badge-danger'; 
+                                $csdTxt = 'Crítico (< 5 días)'; 
+                            } elseif ($daysToCsd <= 30) { 
+                                $csdClass = 'badge-warning'; 
+                                $csdTxt = 'Próximo a vencer'; 
+                            } else { 
+                                $csdClass = 'badge-success'; 
+                                $csdTxt = 'Vigente'; 
+                            }
                         }
                     }
 
@@ -106,7 +140,6 @@
                         return in_array(strtolower($task->status?->name ?? ''), $closedStatusNames);
                     });
                 @endphp
-
                 <div class="row text-center mb-3">
                     <div class="col-sm-6">
                         <div class="info-box bg-light shadow-sm mb-2">
@@ -134,27 +167,121 @@
 
                 <div class="list-group">
                     <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                        <div><i class="fas fa-file-pdf text-danger mr-2"></i> <small class="font-weight-bold">Constancia de Situación Fiscal (CSF)</small></div>
-                        <span class="badge {{ $client->csf ? 'badge-success' : 'badge-secondary' }} py-1 px-2">{{ $client->csf ? 'Cargado' : 'Faltante' }}</span>
+                        <div>
+                            <i class="fas fa-file-pdf text-danger mr-2"></i> 
+                            <small class="font-weight-bold">Constancia de Situación Fiscal (CSF)</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge {{ $client->csf ? 'badge-success' : 'badge-secondary' }} py-1 px-2 mr-2">
+                                {{ $client->csf ? 'Cargado' : 'Faltante' }}
+                            </span>
+                            
+                            @if($client->csf)
+                                <a href="{{ route('clients.download.document', [$client->id, 'csf']) }}" class="btn btn-sm btn-outline-success py-0 px-2" title="Descargar PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            @endif
+
+                            <form action="{{ route('clients.upload.document', [$client->id, 'csf']) }}" method="POST" enctype="multipart/form-data" class="ml-1">
+                                @csrf
+                                <label class="btn btn-sm btn-outline-primary py-0 px-2 mb-0" style="cursor: pointer;" title="Subir / Actualizar PDF">
+                                    <i class="fas fa-upload"></i>
+                                    <input type="file" name="documento" accept=".pdf" class="d-none" onchange="this.form.submit()">
+                                </label>
+                            </form>
+                        </div>
                     </div>
+
                     <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                        <div><i class="fas fa-file-invoice text-success mr-2"></i> <small class="font-weight-bold">Opinión de Cumplimiento</small></div>
-                        <span class="badge {{ $client->opinion_cumplimiento ? 'badge-success' : 'badge-secondary' }} py-1 px-2">{{ $client->opinion_cumplimiento ? 'Cargado' : 'Faltante' }}</span>
+                        <div>
+                            <i class="fas fa-file-invoice text-success mr-2"></i> 
+                            <small class="font-weight-bold">Opinión de Cumplimiento</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge {{ $client->opinion ? 'badge-success' : 'badge-secondary' }} py-1 px-2 mr-2">
+                                {{ $client->opinion ? 'Cargado' : 'Faltante' }}
+                            </span>
+                            
+                            @if($client->opinion)
+                                <a href="{{ route('clients.download.document', [$client->id, 'opinion']) }}" class="btn btn-sm btn-outline-success py-0 px-2" title="Descargar PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            @endif
+
+                            <form action="{{ route('clients.upload.document', [$client->id, 'opinion']) }}" method="POST" enctype="multipart/form-data" class="ml-1">
+                                @csrf
+                                <label class="btn btn-sm btn-outline-primary py-0 px-2 mb-0" style="cursor: pointer;" title="Subir / Actualizar PDF">
+                                    <i class="fas fa-upload"></i>
+                                    <input type="file" name="documento" accept=".pdf" class="d-none" onchange="this.form.submit()">
+                                </label>
+                            </form>
+                        </div>
                     </div>
+
+                    {{-- Item: FIEL --}}
                     <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                        <div><i class="fas fa-certificate text-warning mr-2"></i> <small class="font-weight-bold">Certificados FIEL (.cer / .key)</small></div>
-                        <span class="badge {{ $client->fiel ? 'badge-success' : 'badge-secondary' }} py-1 px-2">{{ $client->fiel ? 'Cargado' : 'Faltante' }}</span>
+                        <div>
+                            <i class="fas fa-file-archive text-warning mr-2"></i> 
+                            <small class="font-weight-bold">Paquete FIEL (.zip)</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge {{ $client->fiel ? 'badge-success' : 'badge-secondary' }} py-1 px-2 mr-2">
+                                {{ $client->fiel ? 'Cargado' : 'Faltante' }}
+                            </span>
+                            
+                            @if($client->fiel)
+                                <a href="{{ route('clients.download.document', [$client->id, 'fiel']) }}" class="btn btn-sm btn-outline-success py-0 px-2" title="Descargar ZIP">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            @endif
+
+                            <form action="{{ route('clients.upload.document', [$client->id, 'fiel']) }}" method="POST" enctype="multipart/form-data" class="ml-1 file-vigencia-form">
+                                @csrf
+                                <label class="btn btn-sm btn-outline-primary py-0 px-2 mb-0" style="cursor: pointer;" title="Subir / Actualizar ZIP">
+                                    <i class="fas fa-upload"></i>
+                                    {{-- Cambiamos el onchange para abrir el modal --}}
+                                    <input type="file" name="documento" accept=".zip" class="d-none info-file-input" onchange="handlerVigenciaModal(this, 'FIEL')">
+                                </label>
+                            </form>
+                        </div>
                     </div>
+
+                    {{-- Item: CSD --}}
                     <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                        <div><i class="fas fa-key text-info mr-2"></i> <small class="font-weight-bold">Sellos Digitales CSD (.cer / .key)</small></div>
-                        <span class="badge {{ $client->csd ? 'badge-success' : 'badge-secondary' }} py-1 px-2">{{ $client->csd ? 'Cargado' : 'Faltante' }}</span>
+                        <div>
+                            <i class="fas fa-file-archive text-info mr-2"></i> 
+                            <small class="font-weight-bold">Sellos Digitales CSD (.zip)</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge {{ $client->csd ? 'badge-success' : 'badge-secondary' }} py-1 px-2 mr-2">
+                                {{ $client->csd ? 'Cargado' : 'Faltante' }}
+                            </span>
+                            
+                            @if($client->csd)
+                                <a href="{{ route('clients.download.document', [$client->id, 'csd']) }}" class="btn btn-sm btn-outline-success py-0 px-2" title="Descargar ZIP">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            @endif
+
+                            <form action="{{ route('clients.upload.document', [$client->id, 'csd']) }}" method="POST" enctype="multipart/form-data" class="ml-1 file-vigencia-form">
+                                @csrf
+                                <label class="btn btn-sm btn-outline-primary py-0 px-2 mb-0" style="cursor: pointer;" title="Subir / Actualizar ZIP">
+                                    <i class="fas fa-upload"></i>
+                                    {{-- Cambiamos el onchange para abrir el modal --}}
+                                    <input type="file" name="documento" accept=".zip" class="d-none info-file-input" onchange="handlerVigenciaModal(this, 'CSD')">
+                                </label>
+                            </form>
+                        </div>
                     </div>
+
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 
+{{-- Sección de Historial de Tareas por Pestañas --}}
 <div class="row">
     <div class="col-12">
         <div class="card card-primary card-tabs">
@@ -178,6 +305,7 @@
             <div class="card-body">
                 <div class="tab-content" id="tasksTabContent">
                     
+                    {{-- Pestaña Tareas Abiertas --}}
                     <div class="tab-pane fade show active" id="open-tasks" role="tabpanel" aria-labelledby="open-tasks-tab">
                         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                             <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Pendientes de Soporte Técnico</h5>
@@ -199,24 +327,22 @@
                                 <tbody>
                                     @foreach($openTasks as $task)
                                         @php
-                                            // Semáforo dinámico para ESTADOS abiertos
                                             $statusName = strtolower($task->status?->name ?? '');
-                                            $statusBadge = 'badge-info'; // Por defecto azul (En Proceso / Asignada)
+                                            $statusBadge = 'badge-info';
                                             
                                             if (str_contains($statusName, 'nuev') || str_contains($statusName, 'pendient') || str_contains($statusName, 'registr')) {
-                                                $statusBadge = 'badge-warning'; // Amarillo para atención inicial
+                                                $statusBadge = 'badge-warning';
                                             } elseif (str_contains($statusName, 'espera') || str_contains($statusName, 'detenid') || str_contains($statusName, 'pausa')) {
-                                                $statusBadge = 'badge-danger'; // Rojo si el flujo se detuvo
+                                                $statusBadge = 'badge-danger';
                                             }
 
-                                            // Semáforo dinámico para PRIORIDADES abiertas
                                             $priorityName = strtolower($task->priority?->name ?? '');
-                                            $priorityBadge = 'badge-secondary'; // Por defecto gris (Baja)
+                                            $priorityBadge = 'badge-secondary';
                                             
                                             if (str_contains($priorityName, 'alta') || str_contains($priorityName, 'urgent') || str_contains($priorityName, 'critic')) {
-                                                $priorityBadge = 'badge-danger text-uppercase font-weight-bold'; // Rojo llamativo
+                                                $priorityBadge = 'badge-danger text-uppercase font-weight-bold';
                                             } elseif (str_contains($priorityName, 'medi') || str_contains($priorityName, 'normal')) {
-                                                $priorityBadge = 'badge-warning'; // Amarillo
+                                                $priorityBadge = 'badge-warning';
                                             }
                                         @endphp
                                         <tr data-href="{{ route('tasks.show', $task->id) }}">
@@ -250,6 +376,7 @@
                         @endif
                     </div>
 
+                    {{-- Pestaña Tareas Cerradas --}}
                     <div class="tab-pane fade" id="closed-tasks" role="tabpanel" aria-labelledby="closed-tasks-tab">
                         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                             <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Histórico de Casos Resueltos</h5>
@@ -306,6 +433,38 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="vigenciaModal" {{-- AdminLTE usa Bootstrap 4, remover data-bs-backdrop --}} data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="vigenciaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header bg-secondary text-white py-2">
+                <h5 class="modal-title id="vigenciaModalLabel" style="font-size: 1.1rem;">
+                    <i class="fas fa-calendar-alt mr-1"></i> Vigencia requerida
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="cancelarSubidaVigencia()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="text-muted small mb-3">
+                    Estás por cargar el paquete de <strong id="txtTipoDocumento" class="text-dark"></strong>. Para mantener los semáforos preventivos funcionales, es obligatorio capturar la fecha de vencimiento.
+                </p>
+                <div class="form-group mb-0">
+                    <label for="input_modal_vigencia" class="font-weight-bold text-secondary small">FECHA DE VENCIMIENTO DEL SAT:</label>
+                    <input type="date" id="input_modal_vigencia" class="form-control form-control-sm" required>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-link text-muted" data-dismiss="modal" onclick="cancelarSubidaVigencia()">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-success px-3 shadow-sm" onclick="procesarSubidaVigencia()">
+                    <i class="fas fa-check mr-1"></i> Confirmar y Subir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @stop
 
 @section('css')
@@ -388,5 +547,67 @@
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust().responsive.recalc();
         });
     });
+</script>
+
+<script>
+    // Variables globales para mantener la referencia de lo que el usuario está operando
+    let currentInputFile = null;
+    let currentForm = null;
+
+    function handlerVigenciaModal(input, tipoNombre) {
+        if (input.files && input.files.length > 0) {
+            // Guardamos la referencia del input y el formulario que disparó el evento
+            currentInputFile = input;
+            currentForm = input.form;
+
+            // Inyectamos dinámicamente el nombre del documento en el texto del modal
+            document.getElementById('txtTipoDocumento').innerText = tipoNombre;
+            
+            // Limpiamos el campo fecha del modal por seguridad e inconsistencias previas
+            document.getElementById('input_modal_vigencia').value = '';
+
+            // Desplegamos el modal
+            $('#vigenciaModal').modal('show');
+        }
+    }
+
+    function procesarSubidaVigencia() {
+        const fechaInput = document.getElementById('input_modal_vigencia').value;
+
+        if (!fechaInput) {
+            alert('Por favor, selecciona una fecha de vencimiento válida para continuar.');
+            return;
+        }
+
+        // Verificamos que las referencias existan
+        if (currentForm && currentInputFile) {
+            // Si ya existía un input previo de vigencia oculto en este form, lo borramos para no duplicar
+            const viejoInput = currentForm.querySelector('input[name="vigencia"]');
+            if (viejoInput) viejoInput.remove();
+
+            // Creamos un nuevo input de tipo text/date oculto sobre el formulario en cuestión
+            const hiddenVigenciaInput = document.createElement('input');
+            hiddenVigenciaInput.type = 'hidden';
+            hiddenVigenciaInput.name = 'vigencia';
+            hiddenVigenciaInput.value = fechaInput;
+
+            // Lo anexamos al formulario dinámicamente
+            currentForm.appendChild(hiddenVigenciaInput);
+
+            // Cerramos modal y disparamos el envío directo al servidor
+            $('#vigenciaModal').modal('hide');
+            currentForm.submit();
+        }
+    }
+
+    function cancelarSubidaVigencia() {
+        // Si el usuario cancela la operación, limpiamos el archivo seleccionado en el input 
+        // para permitirle volver a seleccionar el mismo archivo si cambia de opinión
+        if (currentInputFile) {
+            currentInputFile.value = '';
+        }
+        currentInputFile = null;
+        currentForm = null;
+    }
 </script>
 @endpush

@@ -10,6 +10,24 @@
 @stop
 
 @section('content')
+<!-- Bloque de alertas para capturar el éxito o error del controlador -->
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="icon fas fa-exclamation-triangle"></i> {{ session('error') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="icon fas fa-check"></i> {{ session('success') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
 <div class="card">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center w-100">
@@ -23,15 +41,6 @@
         </div>
     </div>
     <div class="card-body">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        @endif
-
         <table id="clients-table" class="table table-bordered table-striped clickable-table">
             <thead class="bg-primary text-white">
                 <tr>
@@ -58,42 +67,57 @@
                     </td>
                     <td>
                         @php
-                            $fielAlert = 'text-success';
-                            if ($client->fiel_vigencia) {
-                                if ($client->fiel_vigencia->isPast()) {
+                            // 1. Lógica de alertas para la FIEL
+                            if (!$client->fiel_vigencia) {
+                                // Si es null, lo pintamos de un color gris neutro
+                                $fielAlert = 'text-muted'; 
+                            } else {
+                                $fielDate = \Carbon\Carbon::parse($client->fiel_vigencia);
+                                
+                                if ($fielDate->isPast()) {
                                     $fielAlert = 'text-danger font-weight-bold';
                                 } else {
-                                    $daysToFielExpire = now()->diffInDays($client->fiel_vigencia, false);
+                                    $daysToFielExpire = now()->diffInDays($fielDate, false);
                                     if ($daysToFielExpire <= 5) {
                                         $fielAlert = 'text-danger font-weight-bold';
                                     } elseif ($daysToFielExpire <= 30) {
                                         $fielAlert = 'text-warning font-weight-bold';
+                                    } else {
+                                        $fielAlert = 'text-success'; // Solo es verde si está vigente de verdad
                                     }
                                 }
                             }
 
-                            $csdAlert = 'text-success';
-                            if ($client->csd_vigencia) {
-                                if ($client->csd_vigencia->isPast()) {
+                            // 2. Lógica de alertas para el CSD
+                            if (!$client->csd_vigencia) {
+                                // Si es null, lo pintamos de un color gris neutro
+                                $csdAlert = 'text-muted'; 
+                            } else {
+                                $csdDate = \Carbon\Carbon::parse($client->csd_vigencia);
+                                
+                                if ($csdDate->isPast()) {
                                     $csdAlert = 'text-danger font-weight-bold';
                                 } else {
-                                    $daysToCsdExpire = now()->diffInDays($client->csd_vigencia, false);
+                                    $daysToCsdExpire = now()->diffInDays($csdDate, false);
                                     if ($daysToCsdExpire <= 5) {
                                         $csdAlert = 'text-danger font-weight-bold';
                                     } elseif ($daysToCsdExpire <= 30) {
                                         $csdAlert = 'text-warning font-weight-bold';
+                                    } else {
+                                        $csdAlert = 'text-success'; // Solo es verde si está vigente de verdad
                                     }
                                 }
                             }
                         @endphp
+                        
                         <small>
-                            <b>FIEL:</b> <span class="{{ $fielAlert }}">{{ $client->fiel_vigencia ? $client->fiel_vigencia->format('d/m/Y') : 'N/A' }}</span><br>
-                            <b>CSD:</b> <span class="{{ $csdAlert }}">{{ $client->csd_vigencia ? $client->csd_vigencia->format('d/m/Y') : 'N/A' }}</span>
+                            <b>FIEL:</b> <span class="{{ $fielAlert }}">{{ $client->fiel_vigencia ? \Carbon\Carbon::parse($client->fiel_vigencia)->format('d/m/Y') : 'N/A' }}</span><br>
+                            <b>CSD:</b> <span class="{{ $csdAlert }}">{{ $client->csd_vigencia ? \Carbon\Carbon::parse($client->csd_vigencia)->format('d/m/Y') : 'N/A' }}</span>
                         </small>
                     </td>
                     <td class="text-center" style="font-size: 1.1rem;">
                         <i class="fas fa-file-pdf {{ $client->csf ? 'text-success' : 'text-gray' }} mx-1" title="CSF"></i>
-                        <i class="fas fa-file-invoice {{ $client->opinion_cumplimiento ? 'text-success' : 'text-gray' }} mx-1" title="Opinión de Cumplimiento"></i>
+                        <i class="fas fa-file-invoice {{ $client->opinion ? 'text-success' : 'text-gray' }} mx-1" title="Opinión de Cumplimiento"></i>
                         <i class="fas fa-certificate {{ $client->fiel ? 'text-warning' : 'text-gray' }} mx-1" title="Archivos FIEL"></i>
                         <i class="fas fa-key {{ $client->csd ? 'text-info' : 'text-gray' }} mx-1" title="Archivos CSD"></i>
                     </td>

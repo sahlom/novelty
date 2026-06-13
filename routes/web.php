@@ -43,6 +43,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Módulo de Catálogos (Agrupados para orden visual)
     Route::resource('clients', ClientController::class);
+    
+    // 🔒 Rutas dedicadas para el manejo seguro de archivos privados del SAT
+    Route::post('/clients/{id}/upload/{type}', [ClientController::class, 'uploadDocument'])->name('clients.upload.document');
+    Route::get('/clients/{id}/download/{type}', [ClientController::class, 'downloadDocument'])->name('clients.download.document');
+
     Route::resource('areas', AreaController::class);
     Route::resource('priorities', PriorityController::class);
     Route::resource('statuses', StatusController::class);

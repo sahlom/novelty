@@ -11,7 +11,7 @@ class Client extends Model
 
     protected $fillable = [
     'razon_social', 'contacto', 'rfc', 'tel', 'email', 
-    'csf', 'opinion_cumplimiento', 'fiel', 'fiel_vigencia', 
+    'csf', 'opinion', 'fiel', 'fiel_vigencia', 
     'csd', 'csd_vigencia'
     ];
 
