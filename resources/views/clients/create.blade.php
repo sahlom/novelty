@@ -14,7 +14,8 @@
                 <h3 class="card-title">Datos del Expediente Fiscal</h3>
             </div>
             
-            <form action="{{ route('clients.store') }}" method="POST">
+            {{-- 1. AGREGADO: enctype para permitir subida de archivos --}}
+            <form action="{{ route('clients.store') }}" method="POST" enctype="multipart/form-data" id="createClientForm">
                 @csrf
                 <div class="card-body">
                     
@@ -33,6 +34,7 @@
                     @endif
 
                     <div class="row">
+                        {{-- Columna Izquierda: Datos Generales --}}
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="razon_social">Razón Social <span class="text-danger">*</span></label>
@@ -66,38 +68,81 @@
                             </div>
                         </div>
 
+                        {{-- Columna Derecha: Vigencias y Carga de Archivos Optimizada --}}
                         <div class="col-md-6">
-                            <div class="bootstrap-timepicker">
-                                <div class="form-group">
-                                    <label for="fiel_vigencia">Vigencia de la FIEL (e.firma)</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
-                                        </div>
-                                        <input type="date" name="fiel_vigencia" id="fiel_vigencia" class="form-control @error('fiel_vigencia') is-invalid @enderror" value="{{ old('fiel_vigencia') }}">
-                                    </div>
-                                    <small class="text-muted">Fecha de vencimiento del archivo .cer de la firma electrónica.</small>
-                                </div>
-                            </div>
 
-                            <div class="form-group">
-                                <label for="csd_vigencia">Vigencia del CSD (Sellos Digitales)</label>
+                            {{-- Bloque FIEL Compac-Row --}}
+                            <div class="form-group mb-4">
+                                <label>Expediente FIEL (e.firma) <span id="req_fiel" class="text-danger d-none">*</span></label>
                                 <div class="input-group">
-                                    <div class="input-group-prepend">
+                                    <div class="input-group-prepend" style="width: 35%;">
                                         <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                        <input type="date" name="fiel_vigencia" id="fiel_vigencia" 
+                                            class="form-control @error('fiel_vigencia') is-invalid @enderror" 
+                                            value="{{ old('fiel_vigencia') }}" 
+                                            title="Fecha de vencimiento">
                                     </div>
-                                    <input type="date" name="csd_vigencia" id="csd_vigencia" class="form-control @error('csd_vigencia') is-invalid @enderror" value="{{ old('csd_vigencia') }}">
+                                    
+                                    <div class="custom-file">
+                                        <input type="file" name="file_fiel" id="file_fiel" 
+                                            class="custom-file-input @error('file_fiel') is-invalid @enderror" 
+                                            accept=".zip">
+                                        <label class="custom-file-label" for="file_fiel" data-browse="Buscar ZIP">Seleccionar paquete FIEL...</label>
+                                    </div>
                                 </div>
-                                <small class="text-muted">Requerido para la facturación electrónica.</small>
+                                <small class="text-muted">Indica la fecha de vencimiento y adjunta el archivo .zip correlativo.</small>
                             </div>
 
-                            <div class="callout callout-info mt-4">
-                                <h5><i class="fas fa-info"></i> Control de Documentos</h5>
-                                <p class="small text-muted mb-0">
-                                    Al crear el cliente, los indicadores de archivos (CSF, Opinión, FIEL y CSD) se iniciarán marcados en gris de manera automática. Podrás subir y actualizar los archivos físicos desde la sección "Editar Expediente" en los siguientes pasos de desarrollo.
-                                </p>
+                            <hr class="my-4">
+
+                            {{-- Bloque CSD Compac-Row --}}
+                            <div class="form-group mb-4">
+                                <label>Sellos Digitales (CSD) <span id="req_csd" class="text-danger d-none">*</span></label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend" style="width: 35%;">
+                                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                        <input type="date" name="csd_vigencia" id="csd_vigencia" 
+                                            class="form-control @error('csd_vigencia') is-invalid @enderror" 
+                                            value="{{ old('csd_vigencia') }}" 
+                                            title="Fecha de vencimiento">
+                                    </div>
+                                    
+                                    <div class="custom-file">
+                                        <input type="file" name="file_csd" id="file_csd" 
+                                            class="custom-file-input @error('file_csd') is-invalid @enderror" 
+                                            accept=".zip">
+                                        <label class="custom-file-label" for="file_csd" data-browse="Buscar ZIP">Seleccionar paquete CSD...</label>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Indica la fecha de vencimiento y adjunta el archivo .zip correlativo.</small>
                             </div>
+
+                            <hr class="my-4">
+
+                            {{-- Documentación SAT Opcional (Se queda igual en estructura base) --}}
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="file_csf">Constancia Fiscal (CSF)</label>
+                                        <div class="custom-file">
+                                            <input type="file" name="file_csf" id="file_csf" class="custom-file-input" accept=".pdf">
+                                            <label class="custom-file-label" for="file_csf" data-browse="PDF">Subir CSF...</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="file_opinion">Opinión de Cumplimiento</label>
+                                        <div class="custom-file">
+                                            <input type="file" name="file_opinion" id="file_opinion" class="custom-file-input" accept=".pdf">
+                                            <label class="custom-file-label" for="file_opinion" data-browse="PDF">Subir Opinión...</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
+
                     </div>
 
                 </div>
@@ -112,4 +157,69 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('js')
+<script>
+    $(document).ready(function () {
+        // Render dinámico del nombre del archivo en los inputs de Bootstrap 4 (AdminLTE)
+        $('.custom-file-input').on('change', function() {
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        });
+
+        const $fileFiel = $('#file_fiel');
+        const $fielVigencia = $('#fiel_vigencia');
+        const $reqFiel = $('#req_fiel');
+
+        const $fileCsd = $('#file_csd');
+        const $csdVigencia = $('#csd_vigencia');
+        const $reqCsd = $('#req_csd');
+
+        // Monitoreo en tiempo real para activar asteriscos visuales de "obligatorio"
+        $fileFiel.on('change', function() {
+            if (this.files.length > 0) {
+                $reqFiel.removeClass('d-none');
+                $fielVigencia.attr('required', true);
+            } else {
+                $reqFiel.addClass('d-none');
+                $fielVigencia.attr('required', false);
+            }
+        });
+
+        $fileCsd.on('change', function() {
+            if (this.files.length > 0) {
+                $reqCsd.removeClass('d-none');
+                $csdVigencia.attr('required', true);
+            } else {
+                $reqCsd.addClass('d-none');
+                $csdVigencia.attr('required', false);
+            }
+        });
+
+        // Interceptor del Submit: Doble validación estricta antes de mandar datos a PHP
+        $('#createClientForm').on('submit', function(e) {
+            let errores = [];
+
+            if ($fileFiel[0].files.length > 0 && !$fielVigencia.val()) {
+                errores.push("Has seleccionado un paquete FIEL, es obligatorio capturar su fecha de vigencia.");
+                $fielVigencia.addClass('is-invalid');
+            } else {
+                $fielVigencia.removeClass('is-invalid');
+            }
+
+            if ($fileCsd[0].files.length > 0 && !$csdVigencia.val()) {
+                errores.push("Has seleccionado sellos CSD, es obligatorio capturar su fecha de vigencia.");
+                $csdVigencia.addClass('is-invalid');
+            } else {
+                $csdVigencia.removeClass('is-invalid');
+            }
+
+            if (errores.length > 0) {
+                e.preventDefault(); // Frena el envío
+                alert(errores.join("\n"));
+            }
+        });
+    });
+</script>
 @stop

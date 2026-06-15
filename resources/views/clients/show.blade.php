@@ -13,7 +13,9 @@
             <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
                 <i class="fas fa-plus"></i> Nueva Tarea
             </a>
-            
+            <a href="{{ route('clients.create') }}" class="btn btn-primary btn-sm align-middle">
+                <i class="fas fa-plus"></i> Nuevo Cliente
+            </a>
             <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
                 <i class="fas fa-edit"></i> Editar Cliente
             </a>

@@ -110,7 +110,7 @@ return [
     */
 
     'preloader' => [
-        'enabled' => true,
+        'enabled' => false,
         'mode' => 'fullscreen',
         'img' => [
             'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
@@ -154,10 +154,11 @@ return [
 
     'layout_topnav' => null,
     'layout_boxed' => null,
-    'layout_fixed_sidebar' => null,
-    'layout_fixed_navbar' => null,
+    'layout_fixed_sidebar' => true,
+    'layout_fixed_navbar' => true,
     'layout_fixed_footer' => null,
     'layout_dark_mode' => null,
+    'classes' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -191,14 +192,14 @@ return [
     */
 
     'classes_body' => '',
-    'classes_brand' => '',
+    'classes_brand' => 'bg-primary',
     'classes_brand_text' => '',
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
-    'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_sidebar_nav' => 'nav-child-indent',
+    'classes_topnav' => 'navbar-primary navbar-dark',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
 
@@ -301,22 +302,34 @@ return [
     'menu' => [
         // Navbar items:
         [
+            'text'         => ' Crear',
+            'icon'         => 'fas fa-plus-circle',
+            'topnav_right' => true, // Lo alinea a la derecha junto a los widgets
+            // 'topnav_class' => 'btn btn-success text-white mx-2 px-3', // Le da aspecto de botón llamativo
+            'submenu'      => [
+                [
+                    'text' => 'Nueva Tarea',
+                    'url'  => 'tasks/create',
+                    'icon' => 'fas fa-fw fa-clipboard-list',
+                ],
+                [
+                    'text' => 'Nuevo Cliente',
+                    'url'  => 'clients/create',
+                    'icon' => 'fas fa-fw fa-building',
+                ],
+            ],
+        ],
+        [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
 
+
         // Sidebar items:
         [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
             'text' => 'Monitor General',
-            'url' => 'monitor',
+            'url'  => 'monitor',
             'icon' => 'fas fa-fw fa-tv',
-            // 'label' => 4,
-            // 'label_color' => 'success',
         ],
         [
             'text' => 'Dashboard',
@@ -339,27 +352,32 @@ return [
                     'text' => 'Clientes',
                     'url' => 'clients',
                     'icon' => 'fas fa-fw fa-building',
+                    'active'  => ['clients*'],
                 ],
                 [
                     'text' => 'Áreas',
                     'url' => 'areas',
                     'icon' => 'fas fa-fw fa-sitemap',
+                    'active'  => ['areas*'],
                 ],
                 [
                     'text' => 'Prioridades',
                     'url' => 'priorities',
                     'icon' => 'fas fa-fw fa-layer-group',
+                    'active'  => ['priorities*'],
                 ],
                 [
                     'text' => 'Estatus',
                     'url' => 'statuses',
-                    'icon' => 'fas fa-fw fa-tasks',
+                    'icon' => 'fas fa-fw fa-toggle-on',
+                    'active'  => ['statuses*'],
                 ],
                 [
                     'text' => 'Usuarios',
                     'url'  => 'users',
                     'icon' => 'fas fa-fw fa-users',
-                    'can' => 'admin-only', // Requiere que definas el Gate o valides rol
+                    'can' => 'admin-only',
+                    'active'  => ['users*'],
                 ],
             ],
         ],

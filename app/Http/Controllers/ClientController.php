@@ -6,6 +6,8 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller
 {
@@ -31,6 +33,7 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validaciones fusionadas (Entradas del formulario HTML + Reglas fiscales)
         $request->validate([
             'razon_social' => 'required|string|max:255',
             'contacto' => 'nullable|string|max:255',
@@ -42,30 +45,86 @@ class ClientController extends Controller
             ],
             'tel' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
-            'fiel_vigencia' => 'nullable|date',
-            'csd_vigencia' => 'nullable|date',
+            
+            // Coerción estricta backend utilizando el nombre del input HTML
+            'fiel_vigencia' => 'required_with:file_fiel|nullable|date',
+            'csd_vigencia'  => 'required_with:file_csd|nullable|date',
+            
+            // Validación de tipos y pesos provenientes del formulario
+            'file_fiel'     => 'nullable|file|mimes:zip|max:10240', // max 10MB
+            'file_csd'      => 'nullable|file|mimes:zip|max:10240',
+            'file_csf'      => 'nullable|file|mimes:pdf|max:5120',  // max 5MB
+            'file_opinion'  => 'nullable|file|mimes:pdf|max:5120',
         ], [
             'rfc.regex' => 'El formato del RFC no es válido para México.',
-            'rfc.unique' => 'Este RFC ya está registrado en el sistema.'
+            'rfc.unique' => 'Este RFC ya está registrado en el sistema.',
+            'fiel_vigencia.required_with' => 'Es obligatorio indicar la fecha de vigencia si se adjunta el paquete FIEL.',
+            'csd_vigencia.required_with' => 'Es obligatorio indicar la fecha de vigencia si se adjuntan los sellos CSD.',
+            'file_fiel.mimes' => 'El archivo de la FIEL debe ser un paquete comprimido (.zip).',
+            'file_csd.mimes' => 'El archivo del CSD debe ser un paquete comprimido (.zip).',
+            'file_csf.mimes' => 'La Constancia de Situación Fiscal debe ser un archivo PDF.',
+            'file_opinion.mimes' => 'La Opinión de Cumplimiento debe ser un archivo PDF.',
         ]);
 
-        Client::create([
-            // Aplicamos la limpieza automática de las reglas del SAT
-            'razon_social' => $this->cleanRazonSocial($request->razon_social),
-            'contacto' => $request->contacto,
-            'rfc' => strtoupper(str_replace(' ', '', $request->rfc)),
-            'tel' => $request->tel,
-            'email' => $request->email,
-            'fiel_vigencia' => $request->fiel_vigencia,
-            'csd_vigencia' => $request->csd_vigencia,
-            'csf' => false,
-            'opinion_cumplimiento' => false,
-            'fiel' => false,
-            'csd' => false,
-        ]);
+        // Iniciamos transacción para evitar registros huérfanos si la carga en disco falla
+        DB::beginTransaction();
 
-        return redirect()->route('clients.index')->with('success', 'Cliente creado con éxito.');
+        try {
+            // 2. Preparar los datos limpios de texto plano
+            $rfcLimpio = strtoupper(str_replace(' ', '', $request->rfc));
+            $razonSocialLimpia = $this->cleanRazonSocial($request->razon_social);
+
+            // 3. Primer guardado: Apartamos el registro base en la DB para disparar el ID autoincremental
+            $client = Client::create([
+                'razon_social'  => $razonSocialLimpia,
+                'contacto'      => $request->contacto,
+                'rfc'           => $rfcLimpio,
+                'tel'           => $request->tel,
+                'email'         => $request->email,
+                'fiel_vigencia' => $request->fiel_vigencia ? Carbon::parse($request->fiel_vigencia) : null,
+                'csd_vigencia'  => $request->csd_vigencia ? Carbon::parse($request->csd_vigencia) : null,
+                // Inicializados en null, respetando tus nombres de columna en el $fillable
+                'csf'           => null,
+                'opinion'       => null,
+                'fiel'          => null,
+                'csd'           => null,
+            ]);
+
+            // 4. Homologación estricta de rutas físicas basadas en el ID obtenido
+            // Cambiamos a la estructura uniforme: storage/app/clientes/{id}/
+            $folderPath = 'clientes/' . $client->id;
+
+            // 5. Almacenamiento físico de binarios e inyección de rutas al modelo instanciado
+            if ($request->hasFile('file_fiel')) {
+                $client->fiel = $request->file('file_fiel')->storeAs($folderPath, 'fiel_' . time() . '.zip', 'local');
+            }
+
+            if ($request->hasFile('file_csd')) {
+                $client->csd = $request->file('file_csd')->storeAs($folderPath, 'csd_' . time() . '.zip', 'local');
+            }
+
+            if ($request->hasFile('file_csf')) {
+                $client->csf = $request->file('file_csf')->storeAs($folderPath, 'csf_' . time() . '.pdf', 'local');
+            }
+
+            if ($request->hasFile('file_opinion')) {
+                $client->opinion = $request->file('file_opinion')->storeAs($folderPath, 'opinion_' . time() . '.pdf', 'local');
+            }
+
+            // 6. Segundo guardado: Consolidar y persistir las cadenas de los paths en la fila correspondiente
+            $client->save();
+
+            DB::commit(); // Confirmamos los cambios de forma permanente en Base de Datos y Disco
+
+            // 7. Redirección final al panel indexado
+            return redirect()->route('clients.index')->with('success', 'Cliente y expediente creados con éxito.');
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Revierte el SQL si ocurre un error inesperado al escribir en el storage
+            return redirect()->back()->withInput()->withErrors(['error' => 'Error al procesar el expediente del cliente: ' . $e->getMessage()]);
+        }
     }
+
     /**
      * Muestra el expediente detallado del cliente.
      */
@@ -80,16 +139,20 @@ class ClientController extends Controller
     /**
      * Muestra el formulario de edición.
      */
-    public function edit(Client $client)
+    public function edit($id)
     {
+        $client = Client::findOrFail($id);
         return view('clients.edit', compact('client'));
     }
 
     /**
      * Actualiza el expediente en la base de datos.
      */
-    public function update(Request $request, Client $client)
+    public function update(Request $request, $id)
     {
+        $client = Client::findOrFail($id);
+
+        // 1. Validaciones (El RFC ignora el ID actual para que no diga "ya está registrado")
         $request->validate([
             'razon_social' => 'required|string|max:255',
             'contacto' => 'nullable|string|max:255',
@@ -97,28 +160,80 @@ class ClientController extends Controller
                 'required',
                 'string',
                 'regex:/^([A-ZÑ&]{3,4}) ?(?:\d{2})(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]) ?(?:[A-Z\d]{2})([A\d])$/i',
-                Rule::unique('clients', 'rfc')->ignore($client->id)
+                'unique:clients,rfc,' . $client->id // <--- Ignora este registro
             ],
             'tel' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
-            'fiel_vigencia' => 'nullable|date',
-            'csd_vigencia' => 'nullable|date',
+            
+            // Mismas reglas de archivos que usamos en el store
+            'fiel_vigencia' => 'required_with:file_fiel|nullable|date',
+            'csd_vigencia'  => 'required_with:file_csd|nullable|date',
+            'file_fiel'     => 'nullable|file|mimes:zip|max:5120', 
+            'file_csd'      => 'nullable|file|mimes:zip|max:5120',
+            'file_csf'      => 'nullable|file|mimes:pdf|max:4096',  
+            'file_opinion'  => 'nullable|file|mimes:pdf|max:4096',
         ], [
-            'rfc.regex' => 'El formato del RFC no es válido.',
+            'rfc.regex' => 'El formato del RFC no es válido para México.',
+            'rfc.unique' => 'Este RFC ya está registrado en el sistema.',
         ]);
 
-        $client->update([
-            // Aplicamos la limpieza automática también al actualizar
-            'razon_social' => $this->cleanRazonSocial($request->razon_social),
-            'contacto' => $request->contacto,
-            'rfc' => strtoupper(str_replace(' ', '', $request->rfc)),
-            'tel' => $request->tel,
-            'email' => $request->email,
-            'fiel_vigencia' => $request->fiel_vigencia,
-            'csd_vigencia' => $request->csd_vigencia,
-        ]);
+        // 2. Limpieza de textos
+        $rfcLimpio = strtoupper(str_replace(' ', '', $request->rfc));
+        $razonSocialLimpia = $this->cleanRazonSocial($request->razon_social);
 
-        return redirect()->route('clients.index')->with('success', 'Expediente actualizado correctamente.');
+        // 3. Actualizar campos de texto plano y fechas primero
+        $client->razon_social = $razonSocialLimpia;
+        $client->contacto     = $request->contacto;
+        $client->rfc          = $rfcLimpio;
+        $client->tel          = $request->tel;
+        $client->email        = $request->email;
+        
+        if ($request->filled('fiel_vigencia')) {
+            $client->fiel_vigencia = Carbon::parse($request->fiel_vigencia);
+        }
+        if ($request->filled('csd_vigencia')) {
+            $client->csd_vigencia = Carbon::parse($request->csd_vigencia);
+        }
+
+        // 4. Procesar archivos (Si suben uno nuevo, borramos el viejo e insertamos con time())
+        $folderPath = "clientes/{$client->id}";
+
+        // Bloque FIEL
+        if ($request->hasFile('file_fiel')) {
+            if ($client->fiel && Storage::disk('local')->exists($client->fiel)) {
+                Storage::disk('local')->delete($client->fiel);
+            }
+            $client->fiel = $request->file('file_fiel')->storeAs($folderPath, 'fiel_' . time() . '.zip', 'local');
+        }
+
+        // Bloque CSD
+        if ($request->hasFile('file_csd')) {
+            if ($client->csd && Storage::disk('local')->exists($client->csd)) {
+                Storage::disk('local')->delete($client->csd);
+            }
+            $client->csd = $request->file('file_csd')->storeAs($folderPath, 'csd_' . time() . '.zip', 'local');
+        }
+
+        // Bloque CSF
+        if ($request->hasFile('file_csf')) {
+            if ($client->csf && Storage::disk('local')->exists($client->csf)) {
+                Storage::disk('local')->delete($client->csf);
+            }
+            $client->csf = $request->file('file_csf')->storeAs($folderPath, 'csf_' . time() . '.pdf', 'local');
+        }
+
+        // Bloque Opinión
+        if ($request->hasFile('file_opinion')) {
+            if ($client->opinion && Storage::disk('local')->exists($client->opinion)) {
+                Storage::disk('local')->delete($client->opinion);
+            }
+            $client->opinion = $request->file('file_opinion')->storeAs($folderPath, 'opinion_' . time() . '.pdf', 'local');
+        }
+
+        // 5. Guardar todos los cambios
+        $client->save();
+
+        return redirect()->route('clients.index')->with('success', 'Cliente actualizado con éxito.');
     }
 
     /**
