@@ -3,7 +3,7 @@
 @section('title', 'Editar Cliente')
 
 @section('content_header')
-    <h1>Editar Expediente de Cliente</h1>
+    <h1>Editar Cliente</h1>
 @stop
 
 @section('content')
@@ -11,7 +11,7 @@
     <div class="col-md-12">
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title">Modificar Datos del Expediente Fiscal: {{ $client->razon_social }}</h3>
+                <h3 class="card-title">Editar Cliente: {{ $client->razon_social }}</h3>
             </div>
             
             <form action="{{ route('clients.update', $client->id) }}" method="POST" enctype="multipart/form-data" id="editClientForm">
@@ -168,7 +168,7 @@
 
                 <div class="card-footer">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Cambios
+                        <i class="fas fa-save"></i> Guardar
                     </button>
                     <a href="{{ route('clients.index') }}" class="btn btn-default">Cancelar</a>
                 </div>

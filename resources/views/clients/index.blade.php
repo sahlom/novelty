@@ -1,12 +1,12 @@
 @extends('adminlte::page')
 
-@section('title', 'Listado de Clientes')
+@section('title', 'Clientes')
 
 {{-- Dejamos solo el plugin base que sí funciona impecable en tu entorno --}}
 @section('plugins.Datatables', true)
 
 @section('content_header')
-    <h1>Gestión de Clientes</h1>
+    <h1>Clientes</h1>
 @stop
 
 @section('content')

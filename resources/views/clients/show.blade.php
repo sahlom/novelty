@@ -1,37 +1,37 @@
 @extends('adminlte::page')
 
-@section('title', 'Expediente del Cliente - ' . $client->razon_social)
+@section('title', 'Cliente - ' . $client->razon_social)
 
 {{-- Activamos DataTables para las tablas de historial --}}
 @section('plugins.Datatables', true)
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
-        <h1>Expediente Digital: {{ $client->razon_social }}</h1>
+        <h1>{{ $client->razon_social }}</h1>
         
         <div class="mt-2 mt-md-0">
-            <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
+            {{-- <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
                 <i class="fas fa-plus"></i> Nueva Tarea
-            </a>
+            </a> --}}
             <a href="{{ route('clients.create') }}" class="btn btn-primary btn-sm align-middle">
-                <i class="fas fa-plus"></i> Nuevo Cliente
+                <i class="fas fa-plus"></i> Nuevo
             </a>
             <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
-                <i class="fas fa-edit"></i> Editar Cliente
+                <i class="fas fa-edit"></i> Editar
             </a>
 
             @if(auth()->user()->role === 'admin')
                 @if($client->tasks()->exists())
                     <button class="btn btn-primary btn-sm shadow-sm mr-2" style="opacity: 0.6; cursor: not-allowed;" 
                             title="No se puede eliminar: Este cliente cuenta con tareas registradas en el sistema." disabled>
-                        <i class="fas fa-ban"></i> No se puede Eliminar
+                        <i class="fas fa-ban"></i> Eliminar
                     </button>
                 @else
                     <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar este cliente? Esta acción borrará el registro del catálogo de forma irreversible.')">
                         @csrf 
                         @method('DELETE')
                         <button type="submit" class="btn btn-primary btn-sm shadow-sm mr-2">
-                            <i class="fas fa-trash-alt"></i> Eliminar Cliente
+                            <i class="fas fa-trash-alt"></i> Eliminar
                         </button>
                     </form>
                 @endif
@@ -47,7 +47,7 @@
         <div class="card card-primary card-outline h-100">
             <div class="card-body box-profile d-flex flex-column justify-content-center">
                 <div class="text-center mb-3">
-                    <i class="fas fa-building fa-3x text-muted"></i>
+                    <i class="fas fa-building fa-3x text-primary"></i>
                 </div>
 
                 <h3 class="profile-username text-center font-weight-bold" style="font-size: 1.25rem;">
@@ -310,7 +310,7 @@
                     {{-- Pestaña Tareas Abiertas --}}
                     <div class="tab-pane fade show active" id="open-tasks" role="tabpanel" aria-labelledby="open-tasks-tab">
                         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-                            <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Pendientes de Soporte Técnico</h5>
+                            <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Tareas Abiertas</h5>
                             <div id="open-actions-container"></div>
                         </div>
                         
@@ -381,7 +381,7 @@
                     {{-- Pestaña Tareas Cerradas --}}
                     <div class="tab-pane fade" id="closed-tasks" role="tabpanel" aria-labelledby="closed-tasks-tab">
                         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-                            <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Histórico de Casos Resueltos</h5>
+                            <h5 class="text-secondary font-weight-bold m-0 mb-2 mb-md-0">Tareas Cerradas</h5>
                             <div id="closed-actions-container"></div>
                         </div>
 

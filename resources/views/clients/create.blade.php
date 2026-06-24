@@ -3,7 +3,7 @@
 @section('title', 'Nuevo Cliente')
 
 @section('content_header')
-    <h1>Registrar Nuevo Cliente</h1>
+    <h1>Nuevo Cliente</h1>
 @stop
 
 @section('content')
@@ -11,7 +11,7 @@
     <div class="col-md-12">
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title">Datos del Expediente Fiscal</h3>
+                <h3 class="card-title">Nuevo Cliente</h3>
             </div>
             
             {{-- 1. AGREGADO: enctype para permitir subida de archivos --}}
@@ -149,7 +149,7 @@
 
                 <div class="card-footer">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Cliente
+                        <i class="fas fa-save"></i> Guardar
                     </button>
                     <a href="{{ route('clients.index') }}" class="btn btn-default">Cancelar</a>
                 </div>

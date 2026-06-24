@@ -42,7 +42,10 @@ class PriorityController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $priority = Priority::with('tasks')->findOrFail($id);
+
+        // Retornamos la vista que acabamos de crear pasándole la variable
+        return view('priorities.show', compact('priority'));
     }
 
     /**

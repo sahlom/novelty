@@ -1,29 +1,29 @@
 @extends('adminlte::page')
 
-@section('title', 'Área - ' . $area->name)
+@section('title', 'Prioridad - ' . $priority->name)
 
 {{-- Activamos DataTables base para las tablas de tareas --}}
 @section('plugins.Datatables', true)
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
-        <h1>{{ $area->name }}</h1>
+        <h1>{{ $priority->name }}</h1>
         <div class="mt-2 mt-md-0">
-            <a href="{{ route('areas.create') }}" class="btn btn-primary btn-sm align-middle">
+            <a href="{{ route('priorities.create') }}" class="btn btn-primary btn-sm align-middle">
                 <i class="fas fa-plus"></i> Nuevo
             </a>
-            <a href="{{ route('areas.edit', $area->id) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
+            <a href="{{ route('priorities.edit', $priority->id) }}" class="btn btn-primary btn-sm shadow-sm mr-2">
                 <i class="fas fa-edit"></i> Editar
             </a>
 
             @if(auth()->user()->role === 'admin')
-                @if($area->tasks()->exists())
+                @if($priority->tasks()->exists())
                     <button class="btn btn-primary btn-sm shadow-sm mr-2" style="opacity: 0.6; cursor: not-allowed;" 
-                            title="No se puede eliminar: Esta área cuenta con tareas registradas en el sistema." disabled>
+                            title="No se puede eliminar: Esta Prioridad cuenta con tareas registradas en el sistema." disabled>
                         <i class="fas fa-ban"></i> Eliminar
                     </button>
                 @else
-                    <form action="{{ route('areas.destroy', $area->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar esta área? Esta acción borrará el registro del catálogo de forma irreversible.')">
+                    <form action="{{ route('priorities.destroy', $priority->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar esta Prioridad? Esta acción borrará el registro del catálogo de forma irreversible.')">
                         @csrf 
                         @method('DELETE')
                         <button type="submit" class="btn btn-primary btn-sm shadow-sm mr-2">
@@ -40,11 +40,11 @@
 @php
     $closedStatusNames = ['cerrada', 'cerrado', 'completada', 'completado', 'resuelta', 'resuelto'];
 
-    $openTasks = $area->tasks->filter(function($task) use ($closedStatusNames) {
+    $openTasks = $priority->tasks->filter(function($task) use ($closedStatusNames) {
         return !in_array(strtolower($task->status?->name ?? ''), $closedStatusNames);
     });
 
-    $closedTasks = $area->tasks->filter(function($task) use ($closedStatusNames) {
+    $closedTasks = $priority->tasks->filter(function($task) use ($closedStatusNames) {
         return in_array(strtolower($task->status?->name ?? ''), $closedStatusNames);
     });
 @endphp
@@ -58,13 +58,13 @@
                             <i class="fas fa-building fa-2x"></i>
                         </div>
                         <div>
-                            <h3 class="font-weight-bold text-dark mb-1">{{ $area->name }}</h3>
+                            <h3 class="font-weight-bold text-dark mb-1">{{ $priority->name }}</h3>
                         </div>
                     </div>
                     
                     <div>
-                        {{-- <span><strong>Total Tareas:</strong> {{ $area->tasks?->count() ?? 0 }}</span> --}}
-                        <h3 class="font-weight-bold text-dark mb-1">Total Tareas: {{ $area->tasks?->count() ?? 0 }}</h3>
+                        {{-- <span><strong>Total Tareas:</strong> {{ $priority->tasks?->count() ?? 0 }}</span> --}}
+                        <h3 class="font-weight-bold text-dark mb-1">Total Tareas: {{ $priority->tasks?->count() ?? 0 }}</h3>
                     </div>
                 </div>
             </div>
@@ -162,7 +162,7 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                                 <h5 class="text-secondary">¡Al día!</h5>
-                                <p class="text-muted small mb-0">No hay tareas abiertas pendientes para esta área.</p>
+                                <p class="text-muted small mb-0">No hay tareas abiertas pendientes para esta Prioridad.</p>
                             </div>
                         @endif
                     </div>
@@ -180,7 +180,7 @@
                                     <tr>
                                         <th style="width: 70px">ID</th>
                                         <th>Título / Descripción</th>
-                                        <th>Área</th>
+                                        <th>Prioridad</th>
                                         <th>Responsable</th>
                                         <th style="width: 130px">Estado</th>
                                         <th style="width: 130px">Prioridad</th>
@@ -214,7 +214,7 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-history fa-3x text-muted mb-3"></i>
                                 <h5 class="text-secondary">Sin Historial Cerrado</h5>
-                                <p class="text-muted small mb-0">No se hay tareas cerradas en esta área.</p>
+                                <p class="text-muted small mb-0">No se hay tareas cerradas en esta Prioridad.</p>
                             </div>
                         @endif
                     </div>

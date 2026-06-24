@@ -6,10 +6,28 @@
 @section('plugins.Datatables', true)
 
 @section('content_header')
-    <h1>Catálogo de Prioridades</h1>
+    <h1>Prioridades</h1>
 @stop
 
 @section('content')
+<!-- Bloque de alertas para capturar el éxito o error del controlador -->
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="icon fas fa-exclamation-triangle"></i> {{ session('error') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="icon fas fa-check"></i> {{ session('success') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
 <div class="card">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center w-100">

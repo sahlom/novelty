@@ -3,39 +3,71 @@
 @section('title', 'Editar Área')
 
 @section('content_header')
-    <h1>Editar Área: {{ $area->name }}</h1>
+    <h1>Editar Área</h1>
 @stop
 
 @section('content')
-<div class="card card-info">
-    <div class="card-header">
-        <h3 class="card-title">Modificar datos del área</h3>
-    </div>
-    
-    <form action="{{ route('areas.update', $area->id) }}" method="POST">
-        @csrf
-        @method('PUT') {{-- ¡Vital! Laravel necesita esto para saber que es una actualización --}}
-        
-        <div class="card-body">
-            <div class="form-group">
-                <label for="name">Nombre del Área</label>
-                <input type="text" 
-                       name="name" 
-                       class="form-control @error('name') is-invalid @enderror" 
-                       id="name" 
-                       value="{{ old('name', $area->name) }}" {{-- Si falla la validación, mantiene lo nuevo; si no, muestra lo que hay en BD --}}
-                       required>
-                
-                @error('name')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Editar Área: {{ $area->name }}</h3>
             </div>
-        </div>
+            
+            <form action="{{ route('areas.update', $area->id) }}" method="POST" id="editAreaForm">
+                @csrf
+                @method('PUT') {{-- Directiva obligatoria para ruteo de actualización en Laravel --}}
+                
+                <div class="card-body">
+                    
+                    {{-- Bloque de errores global idéntico al de clientes --}}
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5><i class="icon fas fa-ban"></i> Error en la captura</h5>
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
 
-        <div class="card-footer">
-            <button type="submit" class="btn btn-info">Actualizar Cambios</button>
-            <a href="{{ route('areas.index') }}" class="btn btn-default">Cancelar</a>
+                    <div class="row">
+                        {{-- Ancho completo y responsivo por defecto --}}
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="name">Nombre del Área <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       name="name" 
+                                       id="name" 
+                                       class="form-control @error('name') is-invalid @enderror" 
+                                       value="{{ old('name', $area->name) }}" 
+                                       placeholder="Ej. Soporte Técnico" 
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <a href="{{ route('areas.index') }}" class="btn btn-default">Cancelar</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
+@stop
+
+@section('js')
+<script>
+    $(document).ready(function () {
+        // Listo por si requieres agregar lógica JS más adelante
+    });
+</script>
 @stop
