@@ -39,7 +39,7 @@
                         {{-- Ancho completo y responsivo por defecto --}}
                         <div class="col-12">
                             <div class="form-group">
-                                <label for="name">Nombre del Prioridad <span class="text-danger">*</span></label>
+                                <label for="name">Nombre de la Prioridad <span class="text-danger">*</span></label>
                                 <input type="text" 
                                        name="name" 
                                        id="name" 

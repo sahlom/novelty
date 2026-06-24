@@ -140,17 +140,153 @@ class TaskController extends Controller
         return redirect()->route('tasks.index')->with('success', 'Tarea eliminada.');
     }
 
+    // public function dashboard()
+    // {
+    //     // Traemos tareas que no estén completadas para la pantalla general
+    //     $tasks = Task::with(['client', 'area', 'status', 'priority', 'user'])
+    //                 ->whereHas('status', function($q) {
+    //                     $q->where('name', '!=', 'Completado');
+    //                 })
+    //                 ->orderBy('priority_id', 'desc')
+    //                 ->get();
+
+    //     return view('tasks.dashboard', compact('tasks'));
+    // }
+
+
     public function dashboard()
     {
-        // Traemos tareas que no estén completadas para la pantalla general
-        $tasks = Task::with(['client', 'area', 'status', 'priority', 'user'])
-                    ->whereHas('status', function($q) {
-                        $q->where('name', '!=', 'Completado');
-                    })
-                    ->orderBy('priority_id', 'desc')
-                    ->get();
+        // 1. Definir los nombres de tus estados cerrados (para excluir del conteo activo)
+        $closedStatuses = ['cerrada', 'cerrado', 'completada', 'completado', 'resuelta', 'resuelto'];
 
-        return view('tasks.dashboard', compact('tasks'));
+        // 2. CONTADORES PRINCIPALES (TARJETAS)
+        // Tareas Activas (Todo lo que NO esté cerrado)
+        $activeTasksCount = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+            $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+        })->count();
+
+        // Tareas En Proceso
+        $processingTasksCount = \App\Models\Task::whereHas('status', function($query) {
+            $query->where(\DB::raw('LOWER(name)'), 'like', '%proceso%')
+                ->orWhere(\DB::raw('LOWER(name)'), 'like', '%atendiend%');
+        })->count();
+
+        // Tareas Urgentes o Altas (y que sigan activas)
+        $urgentTasksCount = \App\Models\Task::whereHas('priority', function($query) {
+            $query->where(\DB::raw('LOWER(name)'), 'like', '%urgent%')
+                ->orWhere(\DB::raw('LOWER(name)'), 'like', '%alta%');
+        })->whereHas('status', function($query) use ($closedStatuses) {
+            $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+        })->count();
+
+        // Clientes únicos con movimiento (que tienen tareas activas)
+        $activeClientsCount = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+            $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+        })->distinct('client_id')->count('client_id');
+
+
+        // 3. DATOS PARA GRÁFICA: Carga de Trabajo por Área
+        $areasData = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+                $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+            })
+            ->join('areas', 'tasks.area_id', '=', 'areas.id')
+            ->select('areas.name as area_name', \DB::raw('count(tasks.id) as total'))
+            ->groupBy('areas.name')
+            ->get();
+
+        $areasLabels = $areasData->pluck('area_name')->toArray();
+        $areasValues = $areasData->pluck('total')->toArray();
+
+
+        // 3.5 DATOS PARA GRÁFICA: Carga de Trabajo por Usuario (Formato Corto: Nombre A.)
+        $usersData = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+                $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+            })
+            ->join('users', 'tasks.user_id', '=', 'users.id')
+            ->select(\DB::raw('COALESCE(users.display_name, users.name) as el_usuario'), \DB::raw('count(tasks.id) as total'))
+            ->groupBy('users.display_name', 'users.name')
+            ->get();
+
+        // Procesamos los nombres uno por uno para recortarlos
+        $usersLabels = $usersData->map(function ($item) {
+            // Limpiamos espacios dobles por si acaso y dividimos por espacios
+            $parts = explode(' ', preg_replace('/\s+/', ' ', trim($item->el_usuario)));
+            
+            if (count($parts) > 1) {
+                // Tomamos el primer elemento (Nombre) y la inicial del segundo (Apellido) + un punto
+                // return $parts[0] . ' ' . mb_substr($parts[1], 0, 1, 'UTF-8') . '.';
+                return $parts[0] . ' ' . mb_substr($parts[1], 0, 1, 'UTF-8');
+            }
+            
+            // Si el usuario solo tiene un nombre sin apellido registrado, lo dejamos igual
+            return $parts[0];
+        })->toArray();
+
+        $usersValues = $usersData->pluck('total')->toArray();
+
+
+        // 4. DATOS PARA GRÁFICA: Semáforo de Estados
+        // Aquí mapeamos a 3 grandes grupos para la Dona
+        $allActiveTasks = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+            $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+        })->with('status')->get();
+
+        $nuevas = 0;
+        $proceso = 0;
+        $espera = 0;
+
+        foreach ($allActiveTasks as $task) {
+            $name = strtolower($task->status?->name ?? '');
+            if (str_contains($name, 'nuev') || str_contains($name, 'pendient') || str_contains($name, 'registr')) {
+                $nuevas++;
+            } elseif (str_contains($name, 'proceso') || str_contains($name, 'atendiend')) {
+                $proceso++;
+            } elseif (str_contains($name, 'espera') || str_contains($name, 'detenid') || str_contains($name, 'pausa') || str_contains($name, 'atrasad')) {
+                $espera++;
+            }
+        }
+        $statusValues = [$nuevas, $proceso, $espera];
+
+
+        // 5. DATOS PARA GRÁFICA: Top 5 Clientes con más carga activa
+        $clientsData = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+                $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+            })
+            ->join('clients', 'tasks.client_id', '=', 'clients.id')
+            ->select('clients.razon_social as cliente', \DB::raw('count(tasks.id) as total'))
+            ->groupBy('clients.razon_social')
+            ->orderBy('total', 'desc')
+            ->take(5)
+            ->get();
+
+        $clientsLabels = $clientsData->pluck('cliente')->toArray();
+        $clientsValues = $clientsData->pluck('total')->toArray();
+
+
+        // 6. TABLA: Las 5 Tareas más antiguas (Rezagadas)
+        $oldestTasks = \App\Models\Task::whereHas('status', function($query) use ($closedStatuses) {
+                $query->whereNotIn(\DB::raw('LOWER(name)'), $closedStatuses);
+            })
+            ->orderBy('created_at', 'asc')
+            ->take(5)
+            ->get();
+
+
+        // Enviar todo a la vista
+        return view('tasks.dashboard', compact(
+            'activeTasksCount',
+            'processingTasksCount',
+            'urgentTasksCount',
+            'activeClientsCount',
+            'areasLabels',
+            'areasValues',
+            'statusValues',
+            'clientsLabels',
+            'clientsValues',
+            'oldestTasks',
+            'usersLabels',
+            'usersValues'
+        ));
     }
 
     public function monitor()

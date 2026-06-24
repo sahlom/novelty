@@ -52,6 +52,19 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'Usuario creado con éxito.');
     }
 
+    /**
+     * Display the specified resource.
+     */
+    public function show(User $user)
+    {
+        // Cargamos el conteo de tareas y las relaciones necesarias para la vista en una sola consulta
+        $user->loadCount('tasks')
+            ->load(['tasks.priority', 'tasks.status']);
+
+        // Retornamos la vista pasando el objeto usuario ya procesado
+        return view('users.show', compact('user'));
+    }
+
     public function edit(User $user)
     {
         return view('users.edit', compact('user'));

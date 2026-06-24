@@ -42,7 +42,10 @@ class StatusController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $status = Status::with('tasks')->findOrFail($id);
+
+        // Retornamos la vista que acabamos de crear pasándole la variable
+        return view('statuses.show', compact('status'));
     }
 
     /**
