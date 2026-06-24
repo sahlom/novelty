@@ -8,6 +8,9 @@
 
 @section('content')
 <div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">Nueva Área</h3>
+    </div>
     <form action="{{ route('areas.store') }}" method="POST">
         @csrf
         <div class="card-body">
