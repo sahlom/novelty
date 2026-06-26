@@ -335,6 +335,7 @@ return [
             'text' => 'Dashboard',
             'url' => 'dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can' => 'admin-only',
             // 'label' => 4,
             // 'label_color' => 'success',
         ],

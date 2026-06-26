@@ -2,6 +2,9 @@
 
 @section('title', 'Tareas')
 
+{{-- SOLUCIÓN 1: Activamos el plugin nativo de Datatables de AdminLTE para que cargue el Core de la librería --}}
+@section('plugins.Datatables', true)
+
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
         <h1>Tareas</h1>
@@ -11,21 +14,9 @@
             </a>
         </div>
     </div>
-
 @stop
 
 @section('content')
-@php
-    // $closedStatusNames = ['cerrada', 'cerrado', 'completada', 'completado', 'resuelta', 'resuelto'];
-
-    // $openTasks = $status->tasks->filter(function($task) use ($closedStatusNames) {
-    //     return !in_array(strtolower($task->status?->name ?? ''), $closedStatusNames);
-    // });
-
-    // $closedTasks = $status->tasks->filter(function($task) use ($closedStatusNames) {
-    //     return in_array(strtolower($task->status?->name ?? ''), $closedStatusNames);
-    // });
-@endphp
 
 <div class="row">
     <div class="col-12">
@@ -73,22 +64,22 @@
                                 <tbody>
                                     @foreach($openTasks as $task)
                                         @php
-                                            $statusName = strtolower($task->status?->name ?? '');
-                                            $statusBadge = 'badge-info';
-                                            
-                                            if (str_contains($statusName, 'nuev') || str_contains($statusName, 'pendient') || str_contains($statusName, 'registr')) {
-                                                $statusBadge = 'badge-warning';
-                                            } elseif (str_contains($statusName, 'espera') || str_contains($statusName, 'detenid') || str_contains($statusName, 'pausa')) {
-                                                $statusBadge = 'badge-danger';
+                                            // Lógica exclusiva del Estado
+                                            $stName = strtolower($task->status?->name ?? '');
+                                            $stBadge = 'badge-info';
+                                            if (str_contains($stName, 'nuev') || str_contains($stName, 'pendient') || str_contains($stName, 'registr')) {
+                                                $stBadge = 'badge-warning';
+                                            } elseif (str_contains($stName, 'espera') || str_contains($stName, 'detenid') || str_contains($stName, 'pausa')) {
+                                                $stBadge = 'badge-danger';
                                             }
 
-                                            $statusName = strtolower($task->priority?->name ?? '');
-                                            $statusBadge = 'badge-secondary';
-                                            
-                                            if (str_contains($statusName, 'alta') || str_contains($statusName, 'urgent') || str_contains($statusName, 'critic')) {
-                                                $statusBadge = 'badge-danger text-uppercase font-weight-bold';
-                                            } elseif (str_contains($statusName, 'medi') || str_contains($statusName, 'normal')) {
-                                                $statusBadge = 'badge-warning';
+                                            // Lógica exclusiva de la Prioridad
+                                            $prName = strtolower($task->priority?->name ?? '');
+                                            $prBadge = 'badge-secondary';
+                                            if (str_contains($prName, 'alta') || str_contains($prName, 'urgent') || str_contains($prName, 'critic')) {
+                                                $prBadge = 'badge-danger text-uppercase font-weight-bold';
+                                            } elseif (str_contains($prName, 'medi') || str_contains($prName, 'normal')) {
+                                                $prBadge = 'badge-warning';
                                             }
                                         @endphp
                                         <tr data-href="{{ route('tasks.show', $task->id) }}">
@@ -97,16 +88,16 @@
                                                 <strong>{{ $task->title }}</strong><br>
                                                 <small class="text-muted">{{ Str::limit($task->description, 90) }}</small>
                                             </td>
-                                            <td>{{ $task->client->razon_social }}</td>
+                                            <td>{{ $task->client?->razon_social ?? 'N/A' }}</td>
                                             <td>{{ $task->area?->name ?? 'N/A' }}</td>
                                             <td>{{ $task->user?->display_name ?? $task->user?->name ?? 'Sin Asignar' }}</td>
                                             <td>
-                                                <span class="badge {{ $statusBadge }} py-1 px-2 w-100 text-center shadow-sm">
+                                                <span class="badge {{ $stBadge }} py-1 px-2 w-100 text-center shadow-sm">
                                                     {{ $task->status?->name ?? 'Abierta' }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge {{ $statusBadge }} py-1 px-2 w-100 text-center shadow-sm">
+                                                <span class="badge {{ $prBadge }} py-1 px-2 w-100 text-center shadow-sm">
                                                     {{ $task->priority?->name ?? 'Normal' }}
                                                 </span>
                                             </td>
@@ -118,7 +109,7 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                                 <h5 class="text-secondary">¡Al día!</h5>
-                                <p class="text-muted small mb-0">No hay tareas abiertas pendientes para este Estatus.</p>
+                                <p class="text-muted small mb-0">No hay tareas abiertas pendientes.</p>
                             </div>
                         @endif
                     </div>
@@ -151,12 +142,12 @@
                                                 <strong>{{ $task->title }}</strong><br>
                                                 <small class="text-muted">{{ Str::limit($task->description, 90) }}</small>
                                             </td>
-                                            <td>{{ $task->client->razon_social }}</td>
+                                            <td>{{ $task->client?->razon_social ?? 'N/A' }}</td>
                                             <td>{{ $task->area?->name ?? 'N/A' }}</td>
                                             <td>{{ $task->user?->display_name ?? $task->user?->name ?? 'Sin Asignar' }}</td>
                                             <td>
                                                 <span class="badge badge-success py-1 px-2 w-100 text-center shadow-sm">
-                                                    <i class="fas fa-check-circle mr-1"></i> {{ $task->status?->name }}
+                                                    <i class="fas fa-check-circle mr-1"></i> {{ $task->status?->name ?? 'Cerrada' }}
                                                 </span>
                                             </td>
                                             <td>
@@ -172,7 +163,7 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-history fa-3x text-muted mb-3"></i>
                                 <h5 class="text-secondary">Sin Historial Cerrado</h5>
-                                <p class="text-muted small mb-0">No se hay tareas cerradas en este Estatus.</p>
+                                <p class="text-muted small mb-0">No hay tareas cerradas registradas.</p>
                             </div>
                         @endif
                     </div>
@@ -198,7 +189,6 @@
         color: #007bff !important;
         border-bottom-color: transparent !important;
     }
-    /* Pequeño ajuste para que el selector de registros y los botones no se encimen */
     .dataTables_length {
         float: left;
         margin-right: 15px;
@@ -207,10 +197,11 @@
         margin-bottom: 10px;
     }
 </style>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
 @stop
 
-@push('js')
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+@section('js')
+{{-- Scripts de extensión para los Botones (Cargados de forma segura tras el Core) --}}
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -226,9 +217,9 @@
             "responsive": true,
             "autoWidth": false,
             "lengthChange": true,
-            "lengthMenu": [[-1, 10, 50, 100], ["Todos", 10, 50, 100]],
-            "pageLength": -1, // Por buena práctica en usabilidad, iniciamos mostrando 10 en lugar de "Todos" directamente
-            "dom": 'lBfrtip', // SOLUCIÓN: Agregada la 'B' junto a la 'l' para pintar simultáneamente el selector y los botones
+            "lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "Todos"]],
+            "pageLength": 10, 
+            "dom": 'lBfrtip', 
             "buttons": [
                 { extend: 'copy', text: '<i class="fas fa-copy"></i> Copiar', className: 'btn btn-sm btn-default' },
                 { extend: 'excel', text: '<i class="fas fa-file-excel text-success"></i> Excel', className: 'btn btn-sm btn-default' },
@@ -248,14 +239,19 @@
             }
         };
 
-        if ($('#open-tasks-table').length) {
-            var openTable = $('#open-tasks-table').DataTable(indexTableConfig);
-            openTable.buttons().container().appendTo('#open-actions-container');
-        }
+        // Inicialización segura comprobando existencia de las tablas y que el plugin esté activo
+        if ($.fn.DataTable) {
+            if ($('#open-tasks-table').length) {
+                var openTable = $('#open-tasks-table').DataTable(indexTableConfig);
+                openTable.buttons().container().appendTo('#open-actions-container');
+            }
 
-        if ($('#closed-tasks-table').length) {
-            var closedTable = $('#closed-tasks-table').DataTable(indexTableConfig);
-            closedTable.buttons().container().appendTo('#closed-actions-container');
+            if ($('#closed-tasks-table').length) {
+                var closedTable = $('#closed-tasks-table').DataTable(indexTableConfig);
+                closedTable.buttons().container().appendTo('#closed-actions-container');
+            }
+        } else {
+            console.error("El Core de DataTables no se cargó correctamente. Revisa la configuración del plugin.");
         }
 
         $('.clickable-table tbody').on('click', 'tr', function (e) {
@@ -269,8 +265,10 @@
         });
 
         $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
-            $($.fn.dataTable.tables(true)).DataTable().columns.adjust().responsive.recalc();
+            if ($.fn.DataTable) {
+                $($.fn.dataTable.tables(true)).DataTable().columns.adjust().responsive.recalc();
+            }
         });
     });
 </script>
-@endpush
+@stop
