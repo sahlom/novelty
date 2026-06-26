@@ -9,9 +9,9 @@
     <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
         <h1>{{ $user->name }}</h1>
         <div class="mt-2 mt-md-0">
-            <!-- <a href="{{ route('users.index') }}" class="btn btn-default btn-sm align-middle mr-2">
+            {{-- <a href="{{ route('users.index') }}" class="btn btn-default btn-sm align-middle mr-2">
                 <i class="fas fa-arrow-left"></i> Volver
-            </a> -->
+            </a> --}}
             <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm align-middle">
                 <i class="fas fa-plus"></i> Nuevo
             </a>
